@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>VIP on Focus Quiz</title>
+<style>
+*{box-sizing:border-box} body{margin:0;font-family:Arial,Helvetica,sans-serif;background:radial-gradient(circle at top,#3a2a13,#0e0e0e 55%,#050505);color:#fff;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:18px}.app{width:100%;max-width:760px;background:rgba(255,255,255,.08);border:1px solid rgba(214,177,92,.45);border-radius:28px;padding:26px;box-shadow:0 20px 50px rgba(0,0,0,.45)}.brand{font-family:Georgia,serif;font-size:42px;letter-spacing:2px;text-align:center;color:#f4d58d;margin:0 0 6px}.sub{text-align:center;color:#ddd;margin:0 0 18px}.progress{height:10px;background:rgba(255,255,255,.16);border-radius:50px;overflow:hidden;margin:14px 0 20px}.bar{height:100%;background:linear-gradient(90deg,#b88a35,#f6d98a);width:0%;transition:.3s}.card{text-align:center}.photo{width:230px;height:230px;border-radius:18px;object-fit:cover;border:3px solid #d6b15c;box-shadow:0 14px 35px rgba(0,0,0,.35)}.qtitle{font-size:19px;margin:22px 0 10px;color:#f4d58d}.options{display:grid;grid-template-columns:1fr 1fr;gap:10px}.opt{padding:13px 10px;border-radius:14px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.22);color:#fff;font-size:15px;cursor:pointer;min-height:52px}.opt:hover{background:rgba(246,217,138,.18)}.opt.selected{background:#d6b15c;color:#111;border-color:#f6d98a;font-weight:bold}.btn{width:100%;padding:15px;border:0;border-radius:16px;background:linear-gradient(90deg,#b88a35,#f6d98a);color:#111;font-size:17px;font-weight:bold;margin-top:20px;cursor:pointer}.btn:disabled{opacity:.45;cursor:not-allowed}.result{text-align:center;padding:30px 5px}.score{font-size:58px;color:#f4d58d;font-weight:bold;margin:12px 0}.small{color:#ddd;line-height:1.5}.review{margin-top:18px;text-align:left}.review div{padding:10px;border-bottom:1px solid rgba(255,255,255,.14)}@media(max-width:560px){.app{padding:18px}.brand{font-size:32px}.photo{width:190px;height:190px}.options{grid-template-columns:1fr}.opt{font-size:14px}}
+</style>
+</head>
+<body>
+<div class="app">
+  <h1 class="brand">VIP ON FOCUS</h1>
+  <p class="sub">Answer both name and position correctly to get 1 point.</p>
+  <div class="progress"><div class="bar" id="bar"></div></div>
+  <div id="game"></div>
+</div>
+<script>
+const people = [
+ {name:'Richard Schestak', position:'Vice President of Operations, Raffles & Fairmont Asia Pacific', img:'images/richard-schestak.jpg'},
+ {name:'Andrew Langdon', position:'Chief Development Officer, Asia Accor', img:'images/andrew-langdon.jpg'},
+ {name:'Jerome Lobier', position:'General Manager, Fairmont Bangkok Sukhumvit', img:'images/jerome-lobier.jpg'},
+ {name:'Patrick Nguyen', position:'Senior Vice President, Design & Technical Services, Luxury Accor Asia Pacific', img:'images/patrick-nguyen.jpg'},
+ {name:'Kenneth Ha', position:'Vice President, Design & Technical Services, Luxury Accor Asia Pacific', img:'images/kenneth-ha.jpg'},
+ {name:'Stephane Lombard', position:'Vice President Design, Luxury Accor Asia Pacific', img:'images/stephane-lombard.jpg'},
+ {name:'Vibhu Garg', position:'Regional Director of Revenue, Asia Raffles & Fairmont', img:'images/vibhu-garg.jpg'}
+];
+let order=[], current=0, score=0, selectedName='', selectedPosition='', review=[];
+const game=document.getElementById('game'), bar=document.getElementById('bar');
+function shuffle(a){return [...a].sort(()=>Math.random()-0.5)}
+function pickOptions(correct, all){let wrong=shuffle(all.filter(x=>x!==correct)).slice(0,3);return shuffle([correct,...wrong])}
+function start(){order=shuffle(people);current=0;score=0;review=[];render()}
+function render(){selectedName='';selectedPosition=''; let p=order[current]; bar.style.width=(current/people.length*100)+'%';
+ const names=pickOptions(p.name, people.map(x=>x.name)); const positions=pickOptions(p.position, people.map(x=>x.position));
+ game.innerHTML=`<div class="card"><div class="small">Question ${current+1} / ${people.length}</div><img class="photo" src="${p.img}" alt="VIP photo"><div class="qtitle">1. Who is this person?</div><div class="options" id="nameOptions">${names.map(x=>`<button class="opt" data-value="${escapeHtml(x)}">${x}</button>`).join('')}</div><div class="qtitle">2. What is the position?</div><div class="options" id="positionOptions">${positions.map(x=>`<button class="opt" data-value="${escapeHtml(x)}">${x}</button>`).join('')}</div><button class="btn" id="next" disabled>${current===people.length-1?'Finish':'Next'}</button></div>`;
+ document.querySelectorAll('#nameOptions .opt').forEach(b=>b.onclick=()=>{select('#nameOptions',b); selectedName=b.dataset.value; checkReady()});
+ document.querySelectorAll('#positionOptions .opt').forEach(b=>b.onclick=()=>{select('#positionOptions',b); selectedPosition=b.dataset.value; checkReady()});
+ document.getElementById('next').onclick=next;
+}
+function escapeHtml(s){return s.replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;')}
+function select(group,b){document.querySelectorAll(group+' .opt').forEach(x=>x.classList.remove('selected'));b.classList.add('selected')}
+function checkReady(){document.getElementById('next').disabled=!(selectedName&&selectedPosition)}
+function next(){let p=order[current]; let ok=(selectedName===p.name && selectedPosition===p.position); if(ok)score++; review.push({name:p.name, ok}); current++; if(current>=people.length)result(); else render();}
+function result(){bar.style.width='100%'; let percent=Math.round(score/people.length*100); let msg=percent>=90?'Excellent!':percent>=70?'Good job!':percent>=50?'Nice try!':'Please try again!';
+ game.innerHTML=`<div class="result"><h2>Result</h2><div class="score">${score} / ${people.length}</div><div class="small">${percent}% — ${msg}</div><button class="btn" onclick="start()">Play Again</button><div class="review">${review.map((r,i)=>`<div>${r.ok?'✅':'❌'} ${i+1}. ${r.name}</div>`).join('')}</div></div>`}
+start();
+</script>
+</body>
+</html>
